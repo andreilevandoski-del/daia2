@@ -51,10 +51,13 @@ app.get('/api/health', function (_req, res) {
     groqConfigured: !!q,
     anthropicConfigured: !!a,
     mealAnalysisProvider: prov,
+    analyzeMealAudioRequiresGemini: true,
     hint:
       !g && !q && !a
         ? 'Defina GEMINI_API_KEY (ou outra) nas Environment Variables do Render.'
-        : undefined,
+        : !g
+          ? 'Áudio (/api/analyze-meal-audio) precisa de GEMINI_API_KEY; foto pode usar Groq/Claude.'
+          : undefined,
   });
 });
 
@@ -68,6 +71,18 @@ Regras:
 - confidence_percent: inteiro 0-100.
 - Se não houver comida: items [], total_carbs_g 0, notes_pt explicando.
 - Números JSON válidos (ponto decimal se preciso).`;
+
+const AUDIO_MEAL_PROMPT = `Você é um assistente nutricional para estimativa educacional de carboidratos (não é conselho médico).
+Ouça o áudio: o utilizador descreve em voz a refeição que consumiu ou vai consumir.
+Com base na descrição, responda com um JSON no MESMO formato que para foto:
+{"items":[{"name":"string em português","carbs_g":number}],"total_carbs_g":number,"confidence_percent":number,"notes_pt":"string curta opcional"}
+
+Regras:
+- carbs_g por item: gramas totais de carboidrato estimadas para as quantidades descritas (inferir porções razoáveis se não forem explícitas).
+- total_carbs_g: soma dos itens.
+- confidence_percent: inteiro 0-100 (menor se a descrição for muito vaga).
+- Se não for possível inferir comida: items [], total_carbs_g 0, notes_pt a pedir mais detalhe.
+- Números JSON válidos.`;
 
 function extractJsonFromModelText(text) {
   const trimmed = String(text || '').trim();
@@ -267,7 +282,8 @@ function isQuotaOrRateLimitError(err) {
   );
 }
 
-async function analyzeWithGemini(genAI, parts) {
+async function analyzeWithGemini(genAI, parts, logPrefix) {
+  const tag = logPrefix || '[analyze-meal] Gemini';
   const models = modelListToTry();
   let lastError = null;
   for (let i = 0; i < models.length; i++) {
@@ -276,12 +292,12 @@ async function analyzeWithGemini(genAI, parts) {
       const text = await generateMealAnalysisText(genAI, modelName, parts);
       const parsed = parseAnalysisJson(text);
       if (i > 0) {
-        console.log('[analyze-meal] Gemini OK com modelo:', modelName);
+        console.log(tag + ' OK com modelo:', modelName);
       }
       return normalizeAnalysis(parsed);
     } catch (err) {
       lastError = err;
-      console.error('[analyze-meal] Gemini', modelName, err.message || err);
+      console.error(tag, modelName, err.message || err);
       if (isRetryableModelError(err) && i < models.length - 1) {
         continue;
       }
@@ -292,6 +308,28 @@ async function analyzeWithGemini(genAI, parts) {
     }
   }
   throw lastError || new Error('Falha ao analisar com Gemini.');
+}
+
+/** MIME aceite pelo Gemini para áudio (browser costuma enviar webm/opus). */
+function normalizeGeminiAudioMime(mimeType) {
+  const raw = String(mimeType || '')
+    .toLowerCase()
+    .split(';')[0]
+    .trim();
+  const map = {
+    'audio/webm': 'audio/webm',
+    'audio/ogg': 'audio/ogg',
+    'audio/mp4': 'audio/mp4',
+    'audio/mpeg': 'audio/mpeg',
+    'audio/mp3': 'audio/mpeg',
+    'audio/wav': 'audio/wav',
+    'audio/x-wav': 'audio/wav',
+    'audio/flac': 'audio/flac',
+    'audio/aac': 'audio/aac',
+  };
+  if (map[raw]) return map[raw];
+  if (/^audio\//.test(raw)) return raw;
+  return 'audio/webm';
 }
 
 async function analyzeWithGroq(apiKey, base64Data, mimeType) {
@@ -547,6 +585,76 @@ app.post('/api/analyze-meal', async function (req, res) {
   }
 });
 
+app.post('/api/analyze-meal-audio', async function (req, res) {
+  try {
+    const geminiKey = String(process.env.GEMINI_API_KEY || '').trim();
+    if (!geminiKey) {
+      return res.status(503).json({
+        error:
+          'Análise por áudio requer GEMINI_API_KEY no servidor. O fluxo de foto (scan) pode usar Groq ou Claude conforme configurado.',
+      });
+    }
+
+    const audioBase64 = req.body && req.body.audioBase64;
+    let mimeType = (req.body && req.body.mimeType) || 'audio/webm';
+
+    if (!audioBase64 || typeof audioBase64 !== 'string') {
+      return res.status(400).json({ error: 'Envie audioBase64 (data URL ou base64 puro).' });
+    }
+
+    let base64Data = audioBase64.includes(',')
+      ? audioBase64.split(',')[1]
+      : audioBase64;
+    base64Data = String(base64Data).replace(/\s/g, '');
+
+    if (!base64Data || base64Data.length < 24) {
+      return res.status(400).json({ error: 'Áudio inválido ou demasiado curto.' });
+    }
+
+    const approxBytes = Math.floor((base64Data.length * 3) / 4);
+    const maxAudio = 18 * 1024 * 1024;
+    if (approxBytes > maxAudio) {
+      return res.status(413).json({
+        error: 'Áudio demasiado grande. Tente uma gravação mais curta.',
+      });
+    }
+
+    const audioMime = normalizeGeminiAudioMime(mimeType);
+    const parts = [
+      { text: AUDIO_MEAL_PROMPT },
+      {
+        inlineData: {
+          mimeType: audioMime,
+          data: base64Data,
+        },
+      },
+    ];
+
+    try {
+      const genAI = new GoogleGenerativeAI(geminiKey);
+      const analysis = await analyzeWithGemini(genAI, parts, '[analyze-meal-audio] Gemini');
+      return res.json({ ok: true, analysis: analysis, provider: 'gemini' });
+    } catch (err) {
+      let msg = (err && err.message) || 'Falha ao analisar o áudio.';
+      const low = msg.toLowerCase();
+      if (low.includes('api key') || low.includes('api_key') || low.includes('permission')) {
+        msg = 'Chave Gemini inválida ou sem permissão. Verifique GEMINI_API_KEY.';
+      } else if (
+        low.includes('mime') ||
+        low.includes('unsupported') ||
+        low.includes('audio') && low.includes('not')
+      ) {
+        msg +=
+          ' Se persistir, o browser pode estar a gravar num formato que o modelo não aceita — tente Chrome ou use o fluxo de foto.';
+      }
+      return res.status(500).json({ error: msg });
+    }
+  } catch (err) {
+    console.error('[analyze-meal-audio]', err.message || err);
+    res.status(500).json({ error: err.message || 'Falha ao analisar o áudio.' });
+  }
+});
+
 app.get('/scan', function (_req, res) {
   res.redirect(302, '/scan.html');
 });
@@ -561,7 +669,7 @@ app.use(function (err, req, res, next) {
   if (err && err.type === 'entity.too.large') {
     return res.status(413).json({
       error:
-        'Imagem ou pedido demasiado grande. Escolha uma foto mais pequena (até ~12 MB) ou tire outra com menos megapixels.',
+        'Pedido demasiado grande (foto ou áudio). Use ficheiro mais pequeno ou gravação mais curta.',
     });
   }
   if (err && err.type === 'entity.parse.failed' && req.path && String(req.path).indexOf('/api/') === 0) {

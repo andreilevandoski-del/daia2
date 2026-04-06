@@ -8,7 +8,7 @@ const { app, PORT } = require('./app');
 
 app.listen(PORT, function () {
   console.log('Daia — http://localhost:' + PORT);
-  console.log('API: POST /api/analyze-meal');
+  console.log('API: POST /api/analyze-meal | POST /api/analyze-meal-audio');
   const ROOT = path.resolve(__dirname, '..');
   const envPath = path.join(ROOT, '.env');
   const g = String(process.env.GEMINI_API_KEY || '').trim();
