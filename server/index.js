@@ -1,6 +1,6 @@
 /**
  * Servidor Daia: arquivos estáticos + POST /api/analyze-meal.
- * Provedores: Gemini, Groq (Llama visão) e/ou Claude (Anthropic) — ver MEAL_ANALYSIS_PROVIDER no .env.
+ * Provedores: Gemini (AI Studio + chave API; faturação Cloud = cotas pagas), Groq, Claude — MEAL_ANALYSIS_PROVIDER no .env.
  * Uso: npm run dev  →  http://localhost:3000
  */
 const fs = require('fs');
@@ -579,6 +579,8 @@ app.listen(PORT, function () {
       console.log('[daia] Apenas Claude no modo auto (sem Gemini).');
     } else if (g && a) {
       console.log('[daia] Gemini + Claude: modo auto usa Claude se a cota do Gemini esgotar (sem Groq).');
+    } else if (g) {
+      console.log('[daia] Gemini (Google AI Studio). Cotas maiores: ative faturação no projeto Cloud associado à chave.');
     }
   }
 });

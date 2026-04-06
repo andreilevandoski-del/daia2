@@ -138,14 +138,19 @@
 
   function useLiveApi() {
     try {
+      if (/\blive=0\b/.test(global.location.search || '')) {
+        return false;
+      }
       if (/\blive=1\b/.test(global.location.search || '')) {
         return true;
       }
-      if (
-        isLocalDevHost() &&
-        global.localStorage &&
-        global.localStorage.getItem('daia_live_api') === '1'
-      ) {
+      if (isLocalDevHost()) {
+        if (global.localStorage && global.localStorage.getItem('daia_live_api') === '0') {
+          return false;
+        }
+        return true;
+      }
+      if (global.localStorage && global.localStorage.getItem('daia_live_api') === '1') {
         return true;
       }
     } catch (e) {
