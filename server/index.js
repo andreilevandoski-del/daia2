@@ -16,6 +16,7 @@ const ROOT = path.resolve(__dirname, '..');
 function loadEnvFiles() {
   const envInProject = path.join(ROOT, '.env');
   const envInCwd = path.resolve(process.cwd(), '.env');
+  const portFromEnv = process.env.PORT;
 
   if (fs.existsSync(envInProject)) {
     dotenv.config({ path: envInProject, override: true });
@@ -25,6 +26,9 @@ function loadEnvFiles() {
   }
   if (!String(process.env.GEMINI_API_KEY || '').trim()) {
     dotenv.config({ override: true });
+  }
+  if (portFromEnv !== undefined && String(portFromEnv).trim() !== '') {
+    process.env.PORT = portFromEnv;
   }
 }
 
