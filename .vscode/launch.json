@@ -1,0 +1,19 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Daia: servidor e prévia (aba Simple Browser)",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "serverReadyAction": {
+        "action": "openSimpleBrowser",
+        "pattern": "((?:https?://)localhost:[0-9]+)",
+        "uriFormat": "%s"
+      }
+    }
+  ]
+}

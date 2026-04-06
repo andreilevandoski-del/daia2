@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Daia — Dose recomendada</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="node_modules/@tabler/icons-webfont/dist/tabler-icons.min.css">
+  <link rel="stylesheet" href="css/daia.css">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="topbar-start">
+        <a href="glucose.html" class="topbar-back" aria-label="Voltar à glicose">
+          <i class="ti ti-chevron-left icon-tabler-md" aria-hidden="true"></i>
+        </a>
+        <div class="logo-row">
+          <div class="logo-img-wrap">
+            <img src="https://www.figma.com/api/mcp/asset/8a941c59-8f31-4a0a-8b6e-9ddc30814627" alt="Daia">
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="screen-main">
+      <h1 class="screen-title">Recomendação de dose</h1>
+      <p class="screen-sub">Sempre editável. Confirme com seu médico.</p>
+      <div class="flow-card">
+        <div class="dose-hero">
+          <div class="dose-hero__value">4,5</div>
+          <div class="dose-hero__unit">unidades (total)</div>
+        </div>
+        <div class="dose-breakdown">
+          <div class="dose-row"><span>Bolus refeição (carboidratos)</span><span>3,2 U</span></div>
+          <div class="dose-row"><span>Bolus de correção</span><span>1,3 U</span></div>
+        </div>
+        <div class="confidence-pill" style="margin-top:16px;">
+          <i class="ti ti-chart-dots icon-tabler-sm" aria-hidden="true"></i>
+          Confiança média · explicação disponível
+        </div>
+      </div>
+      <div class="callout callout--info">
+        <i class="ti ti-info-circle icon-tabler-md" aria-hidden="true"></i>
+        <span>Recomendação de apoio, não substitui aconselhamento médico.</span>
+      </div>
+      <div class="flex-row-gap">
+        <button type="button" class="btn btn--outline" id="btn-result-edit">Editar dose</button>
+        <a class="btn" href="index.html">Concluir</a>
+      </div>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Navegação principal">
+      <a href="index.html" class="nav-link" data-nav="home">
+        <i class="ti ti-home icon-tabler-nav" aria-hidden="true"></i>
+        <span class="nav-label">Início</span>
+      </a>
+      <a href="scan.html" class="nav-link" data-nav="scan">
+        <i class="ti ti-camera icon-tabler-nav" aria-hidden="true"></i>
+        <span class="nav-label">Scan</span>
+      </a>
+      <a href="audio.html" class="nav-link" data-nav="audio">
+        <i class="ti ti-microphone icon-tabler-nav" aria-hidden="true"></i>
+        <span class="nav-label">Áudio</span>
+      </a>
+      <a href="profile.html" class="nav-link" data-nav="profile">
+        <i class="ti ti-user icon-tabler-nav" aria-hidden="true"></i>
+        <span class="nav-label">Perfil</span>
+      </a>
+    </nav>
+  </div>
+  <script src="js/nav.js" defer></script>
+</body>
+</html>

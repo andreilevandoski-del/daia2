@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Daia — Glicose atual</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="node_modules/@tabler/icons-webfont/dist/tabler-icons.min.css">
+  <link rel="stylesheet" href="css/daia.css">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="topbar-start">
+        <a href="index.html" class="topbar-back" aria-label="Voltar ao início">
+          <i class="ti ti-chevron-left icon-tabler-md" aria-hidden="true"></i>
+        </a>
+        <div class="logo-row">
+          <div class="logo-img-wrap">
+            <img src="https://www.figma.com/api/mcp/asset/8a941c59-8f31-4a0a-8b6e-9ddc30814627" alt="Daia">
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="screen-main">
+      <h1 class="screen-title">Glicose atual</h1>
+      <p class="screen-sub">Necessária para bolus de correção. Você pode pular com aviso.</p>
+      <div class="field" id="glucose-field">
+        <label class="field-label" for="input-glucose">mg/dL</label>
+        <input type="number" inputmode="numeric" class="input-field" id="input-glucose" placeholder="Ex.: 120" min="20" max="600" aria-describedby="glucose-hint glucose-field-error" aria-invalid="false">
+        <p class="field-error" id="glucose-field-error" role="alert">Informe um valor válido ou marque pular.</p>
+        <p class="field-hint" id="glucose-hint">Entre 20 e 600 mg/dL.</p>
+      </div>
+      <label class="checkbox-row">
+        <input type="checkbox" id="glucose-skip">
+        <span>Pular glicose (sem bolus de correção)</span>
+      </label>
+      <div class="callout callout--warning" id="glucose-warning" hidden>
+        <i class="ti ti-alert-circle icon-tabler-md" aria-hidden="true"></i>
+        <span>Glicose não informada — correção não incluída. Conforme regra de produto.</span>
+      </div>
+      <button type="button" class="btn" id="btn-calc-dose">
+        <i class="ti ti-calculator icon-tabler-btn" aria-hidden="true"></i>
+        Calcular dose
+      </button>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Navegação principal">
+      <a href="index.html" class="nav-link" data-nav="home">
+        <i class="ti ti-home icon-tabler-nav" aria-hidden="true"></i>
+        <span class="nav-label">Início</span>
+      </a>
+      <a href="scan.html" class="nav-link" data-nav="scan">
+        <i class="ti ti-camera icon-tabler-nav" aria-hidden="true"></i>
+        <span class="nav-label">Scan</span>
+      </a>
+      <a href="audio.html" class="nav-link" data-nav="audio">
+        <i class="ti ti-microphone icon-tabler-nav" aria-hidden="true"></i>
+        <span class="nav-label">Áudio</span>
+      </a>
+      <a href="profile.html" class="nav-link" data-nav="profile">
+        <i class="ti ti-user icon-tabler-nav" aria-hidden="true"></i>
+        <span class="nav-label">Perfil</span>
+      </a>
+    </nav>
+  </div>
+  <script src="js/meal-glucose-submit.js" defer></script>
+  <script src="js/nav.js" defer></script>
+  <script src="js/glucose-page.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    { "source": "/scan", "destination": "/scan.html" },
+    { "source": "/audio", "destination": "/audio.html" },
+    { "source": "/analyze", "destination": "/analyze.html" },
+    { "source": "/profile", "destination": "/profile.html" },
+    { "source": "/history", "destination": "/history.html" },
+    { "source": "/manual", "destination": "/manual.html" },
+    { "source": "/glucose", "destination": "/glucose.html" },
+    { "source": "/result", "destination": "/result.html" }
+  ]
+}

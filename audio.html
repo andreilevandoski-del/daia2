@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Daia — Áudio</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="node_modules/@tabler/icons-webfont/dist/tabler-icons.min.css">
+  <link rel="stylesheet" href="css/daia.css">
+</head>
+<body data-nav="audio">
+  <div class="app">
+    <header class="topbar">
+      <div class="topbar-start">
+        <a href="index.html" class="topbar-back" id="topbar-back" aria-label="Voltar ao início">
+          <i class="ti ti-chevron-left icon-tabler-md" aria-hidden="true"></i>
+        </a>
+        <div class="logo-row">
+          <div class="logo-img-wrap">
+            <img src="https://www.figma.com/api/mcp/asset/8a941c59-8f31-4a0a-8b6e-9ddc30814627" alt="Daia">
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="screen-main">
+      <div class="stepper" role="tablist" aria-label="Etapas do áudio">
+        <span class="stepper-dot is-active" data-audio-dot="1"></span>
+        <span class="stepper-dot" data-audio-dot="2"></span>
+      </div>
+
+      <h1 class="screen-title">Descrever refeição</h1>
+      <p class="screen-sub">Use o microfone do telemóvel. Toque para começar a gravar; toque de novo para parar e analisar.</p>
+
+      <p class="field-error" id="audio-error" role="alert" style="display:none;"></p>
+
+      <div id="audio-input-area" class="audio-input-wrap">
+        <button type="button" class="audio-mic-btn" id="btn-audio-record" aria-pressed="false" aria-label="Gravar áudio">
+          <i class="ti ti-microphone" aria-hidden="true"></i>
+        </button>
+        <p class="muted audio-hint" id="audio-hint">Toque no microfone para gravar (requer HTTPS no site publicado).</p>
+        <p class="audio-timer" id="audio-timer" hidden aria-live="polite">0:00</p>
+      </div>
+
+      <div class="flow-card" id="audio-transcribing" hidden style="text-align:center;">
+        <div class="scan-spinner" role="status" aria-live="polite" aria-label="A processar"></div>
+        <p class="muted">A transcrever e a interpretar a sua descrição…</p>
+      </div>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Navegação principal">
+      <a href="index.html" class="nav-link" data-nav="home">
+        <i class="ti ti-home icon-tabler-nav" aria-hidden="true"></i>
+        <span class="nav-label">Início</span>
+      </a>
+      <a href="scan.html" class="nav-link" data-nav="scan">
+        <i class="ti ti-camera icon-tabler-nav" aria-hidden="true"></i>
+        <span class="nav-label">Scan</span>
+      </a>
+      <a href="audio.html" class="nav-link" data-nav="audio">
+        <i class="ti ti-microphone icon-tabler-nav" aria-hidden="true"></i>
+        <span class="nav-label">Áudio</span>
+      </a>
+      <a href="profile.html" class="nav-link" data-nav="profile">
+        <i class="ti ti-user icon-tabler-nav" aria-hidden="true"></i>
+        <span class="nav-label">Perfil</span>
+      </a>
+    </nav>
+  </div>
+  <script src="js/nav.js" defer></script>
+  <script src="js/simulation.js" defer></script>
+  <script src="js/audio-flow.js" defer></script>
+</body>
+</html>

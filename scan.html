@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Daia — Scan refeição</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="node_modules/@tabler/icons-webfont/dist/tabler-icons.min.css">
+  <link rel="stylesheet" href="css/daia.css">
+</head>
+<body data-nav="scan">
+  <div class="app">
+    <header class="topbar">
+      <div class="topbar-start">
+        <a href="index.html" class="topbar-back" id="topbar-back" aria-label="Voltar ao início">
+          <i class="ti ti-chevron-left icon-tabler-md" aria-hidden="true"></i>
+        </a>
+        <div class="logo-row">
+          <div class="logo-img-wrap">
+            <img src="https://www.figma.com/api/mcp/asset/8a941c59-8f31-4a0a-8b6e-9ddc30814627" alt="Daia">
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="screen-main">
+      <div class="stepper" role="tablist" aria-label="Etapas do scan">
+        <span class="stepper-dot is-active" data-scan-dot="1"></span>
+        <span class="stepper-dot" data-scan-dot="2"></span>
+      </div>
+
+      <h1 class="screen-title">Escanear refeição</h1>
+      <p class="screen-sub">Use a câmera ou a galeria. No telemóvel, conceda permissões quando o sistema pedir.</p>
+
+      <input type="file" id="scan-file-gallery" accept="image/*" hidden aria-hidden="true">
+      <input type="file" id="scan-file-camera" accept="image/*" capture="environment" hidden aria-hidden="true">
+
+      <div class="scan-source-row">
+        <button type="button" class="btn btn--camera" id="btn-scan-open-camera" aria-label="Abrir câmera para tirar foto">
+          <i class="ti ti-camera icon-tabler-btn" aria-hidden="true"></i>
+          Tirar foto
+        </button>
+        <div class="dropzone dropzone--compact" id="scan-dropzone" role="button" tabindex="0" aria-label="Escolher foto da galeria">
+          <i class="ti ti-photo"></i>
+          Galeria
+        </div>
+      </div>
+
+      <!-- Spinner: substituí o dropzone ao analisar -->
+      <div class="flow-card" id="scan-analyzing" hidden style="text-align:center;">
+        <div class="scan-spinner" role="status" aria-live="polite" aria-label="Processando"></div>
+        <p class="muted">Analisando a refeição…</p>
+      </div>
+
+      <p class="field-error" id="scan-analyze-error" role="alert" style="display:none;"></p>
+
+      <button type="button" class="btn" id="btn-scan-analyze">
+        <i class="ti ti-scan icon-tabler-btn" aria-hidden="true"></i>
+        Analisar imagem
+      </button>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Navegação principal">
+      <a href="index.html" class="nav-link" data-nav="home">
+        <i class="ti ti-home icon-tabler-nav" aria-hidden="true"></i>
+        <span class="nav-label">Início</span>
+      </a>
+      <a href="scan.html" class="nav-link" data-nav="scan">
+        <i class="ti ti-camera icon-tabler-nav" aria-hidden="true"></i>
+        <span class="nav-label">Scan</span>
+      </a>
+      <a href="audio.html" class="nav-link" data-nav="audio">
+        <i class="ti ti-microphone icon-tabler-nav" aria-hidden="true"></i>
+        <span class="nav-label">Áudio</span>
+      </a>
+      <a href="profile.html" class="nav-link" data-nav="profile">
+        <i class="ti ti-user icon-tabler-nav" aria-hidden="true"></i>
+        <span class="nav-label">Perfil</span>
+      </a>
+    </nav>
+  </div>
+  <script src="js/nav.js" defer></script>
+  <script src="js/simulation.js" defer></script>
+  <script src="js/scan-flow.js" defer></script>
+</body>
+</html>

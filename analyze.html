@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Daia — Analisando refeição</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="node_modules/@tabler/icons-webfont/dist/tabler-icons.min.css">
+  <link rel="stylesheet" href="css/daia.css">
+</head>
+<body data-nav="scan">
+  <div class="app">
+    <header class="topbar">
+      <div class="topbar-start">
+        <a href="scan.html" class="topbar-back" id="topbar-back" aria-label="Voltar ao scan">
+          <i class="ti ti-chevron-left icon-tabler-md" aria-hidden="true"></i>
+        </a>
+        <div class="logo-row">
+          <div class="logo-img-wrap">
+            <img src="https://www.figma.com/api/mcp/asset/8a941c59-8f31-4a0a-8b6e-9ddc30814627" alt="Daia">
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="screen-main">
+      <!-- Confirmar refeição + glicose -->
+      <div data-analyze-step="1">
+        <h1 class="screen-title">Confirmar refeição</h1>
+        <p class="screen-sub">Revise os itens detectados e informe sua glicose atual.</p>
+
+        <div class="flow-card stack-gap" id="analyze-meal-card">
+          <div class="confidence-pill" id="analyze-confidence">
+            <i class="ti ti-brain icon-tabler-sm" aria-hidden="true"></i>
+            Confiança —
+          </div>
+          <ul class="flow-list" id="analyze-flow-list">
+            <li><strong>Arroz branco</strong> <span class="muted">48 g carb</span></li>
+            <li><strong>Feijão</strong> <span class="muted">22 g carb</span></li>
+            <li><strong>Frango grelhado</strong> <span class="muted">0 g carb</span></li>
+          </ul>
+          <p class="muted" id="analyze-total-carbs" style="text-align:right;font-weight:700;color:var(--dark-text);">Total: 70 g carb</p>
+          <p class="muted" id="analyze-notes" style="display:none;font-size:13px;margin-top:8px;"></p>
+        </div>
+
+        <button type="button" class="btn btn--ghost btn--sm" id="btn-rescan-photo">
+          <i class="ti ti-camera icon-tabler-btn" aria-hidden="true"></i>
+          Reenviar foto
+        </button>
+
+        <div class="field">
+          <label class="field-label" for="analyze-input-glucose">Glicose atual (mg/dL)</label>
+          <input
+            type="number"
+            inputmode="numeric"
+            class="input-field"
+            id="analyze-input-glucose"
+            placeholder="Ex.: 120"
+            min="20"
+            max="600"
+            aria-describedby="analyze-glucose-hint analyze-glucose-error"
+            aria-invalid="false"
+          >
+          <p class="field-error" id="analyze-glucose-error" role="alert">Informe um valor válido ou marque pular.</p>
+          <p class="field-hint" id="analyze-glucose-hint">Entre 20 e 600 mg/dL.</p>
+        </div>
+
+        <label class="checkbox-row">
+          <input type="checkbox" id="analyze-glucose-skip">
+          <span>Pular glicose (sem bolus de correção)</span>
+        </label>
+
+        <div class="callout callout--warning" id="analyze-glucose-warning" hidden>
+          <i class="ti ti-alert-circle icon-tabler-md" aria-hidden="true"></i>
+          <span>Glicose não informada — correção não incluída.</span>
+        </div>
+
+        <button type="button" class="btn" id="btn-analyze-calc-dose">
+          <i class="ti ti-calculator icon-tabler-btn" aria-hidden="true"></i>
+          Calcular dose
+        </button>
+      </div>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Navegação principal">
+      <a href="index.html" class="nav-link" data-nav="home">
+        <i class="ti ti-home icon-tabler-nav" aria-hidden="true"></i>
+        <span class="nav-label">Início</span>
+      </a>
+      <a href="scan.html" class="nav-link" data-nav="scan">
+        <i class="ti ti-camera icon-tabler-nav" aria-hidden="true"></i>
+        <span class="nav-label">Scan</span>
+      </a>
+      <a href="audio.html" class="nav-link" data-nav="audio">
+        <i class="ti ti-microphone icon-tabler-nav" aria-hidden="true"></i>
+        <span class="nav-label">Áudio</span>
+      </a>
+      <a href="profile.html" class="nav-link" data-nav="profile">
+        <i class="ti ti-user icon-tabler-nav" aria-hidden="true"></i>
+        <span class="nav-label">Perfil</span>
+      </a>
+    </nav>
+  </div>
+
+  <script src="js/meal-glucose-submit.js" defer></script>
+  <script src="js/nav.js" defer></script>
+  <script src="js/analyze-flow.js" defer></script>
+</body>
+</html>
