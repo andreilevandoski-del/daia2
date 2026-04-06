@@ -1,7 +1,7 @@
 {
   "name": "daia",
   "version": "1.0.0",
-  "description": "",
+  "description": "Daia — servidor em server/index.js (npm start)",
   "main": "index.js",
   "scripts": {
     "dev": "node server/index.js",

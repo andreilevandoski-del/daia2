@@ -9,5 +9,6 @@ services:
     plan: free
     region: frankfurt
     buildCommand: npm install
-    startCommand: npm start
+    # Explícito: evita o Render assumir `node src/index.js`
+    startCommand: node server/index.js
     healthCheckPath: /index.html
