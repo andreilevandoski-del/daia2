@@ -1,6 +1,6 @@
 /**
- * Fluxo Scan — galeria ou câmera, depois análise (simulação por padrão).
- * API real no servidor: ?live=1 ou localStorage daia_live_api=1 + npm run dev.
+ * Fluxo Scan — galeria ou câmera, depois análise.
+ * API real: por defeito ativa; ?live=0 ou daia_live_api=0 só simulação.
  */
 (function () {
   'use strict';
@@ -129,7 +129,9 @@
 
       function shouldFallbackToSimulation(err) {
         var st = err && err.daiaStatus;
-        if (st === 404 || st === 502 || st === 503 || st === 504) {
+        // 404: rota /api inexistente (ex.: só estático). 504: timeout.
+        // NÃO fazer fallback em 502/503: no Render costuma ser chave .env em falta — mostrar erro.
+        if (st === 404 || st === 504) {
           return true;
         }
         var msg = String((err && err.message) || '');

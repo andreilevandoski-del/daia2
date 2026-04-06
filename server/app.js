@@ -17,13 +17,13 @@ function loadEnvFiles() {
   const portFromEnv = process.env.PORT;
 
   if (fs.existsSync(envInProject)) {
-    dotenv.config({ path: envInProject, override: true });
+    dotenv.config({ path: envInProject, override: false });
   }
   if (!String(process.env.GEMINI_API_KEY || '').trim() && fs.existsSync(envInCwd)) {
-    dotenv.config({ path: envInCwd, override: true });
+    dotenv.config({ path: envInCwd, override: false });
   }
   if (!String(process.env.GEMINI_API_KEY || '').trim()) {
-    dotenv.config({ override: true });
+    dotenv.config({ override: false });
   }
   if (portFromEnv !== undefined && String(portFromEnv).trim() !== '') {
     process.env.PORT = portFromEnv;
@@ -38,6 +38,25 @@ const app = express();
 app.set('trust proxy', 1);
 
 app.use(express.json({ limit: '35mb' }));
+
+/** Diagnóstico deploy: abre /api/health no browser (não expõe chaves). */
+app.get('/api/health', function (_req, res) {
+  const g = String(process.env.GEMINI_API_KEY || '').trim();
+  const q = String(process.env.GROQ_API_KEY || '').trim();
+  const a = String(process.env.ANTHROPIC_API_KEY || '').trim();
+  const prov = String(process.env.MEAL_ANALYSIS_PROVIDER || 'auto').toLowerCase();
+  res.json({
+    ok: true,
+    geminiConfigured: !!g,
+    groqConfigured: !!q,
+    anthropicConfigured: !!a,
+    mealAnalysisProvider: prov,
+    hint:
+      !g && !q && !a
+        ? 'Defina GEMINI_API_KEY (ou outra) nas Environment Variables do Render.'
+        : undefined,
+  });
+});
 
 const ANALYSIS_PROMPT = `Você é um assistente nutricional para estimativa educacional de carboidratos (não é conselho médico).
 Analise a imagem da refeição e responda com um JSON no formato:
