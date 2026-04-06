@@ -141,22 +141,19 @@
       if (/\blive=0\b/.test(global.location.search || '')) {
         return false;
       }
-      if (/\blive=1\b/.test(global.location.search || '')) {
-        return true;
+      if (global.localStorage && global.localStorage.getItem('daia_live_api') === '0') {
+        return false;
       }
-      if (isLocalDevHost()) {
-        if (global.localStorage && global.localStorage.getItem('daia_live_api') === '0') {
-          return false;
-        }
+      if (/\blive=1\b/.test(global.location.search || '')) {
         return true;
       }
       if (global.localStorage && global.localStorage.getItem('daia_live_api') === '1') {
         return true;
       }
     } catch (e) {
-      /* private mode */
+      return true;
     }
-    return false;
+    return true;
   }
 
   function delay(ms) {

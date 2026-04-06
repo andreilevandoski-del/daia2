@@ -1,0 +1,13 @@
+# Render.com — Web Service (Node): estáticos + POST /api/analyze-meal
+# Dashboard: New + → Web Service → liga o repositório GitHub; Render deteta render.yaml
+# Em Environment, adiciona: GEMINI_API_KEY, MEAL_ANALYSIS_PROVIDER, etc. (como no .env.example)
+
+services:
+  - type: web
+    name: daia
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /index.html
