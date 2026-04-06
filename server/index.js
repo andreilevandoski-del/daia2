@@ -1,6 +1,6 @@
 /**
  * Servidor Daia: arquivos estáticos + POST /api/analyze-meal.
- * Provedores: Gemini (Google AI) e/ou Groq (Llama visão) — ver MEAL_ANALYSIS_PROVIDER no .env.
+ * Provedores: Gemini, Groq (Llama visão) e/ou Claude (Anthropic) — ver MEAL_ANALYSIS_PROVIDER no .env.
  * Uso: npm run dev  →  http://localhost:3000
  */
 const fs = require('fs');
@@ -8,6 +8,7 @@ const path = require('path');
 const dotenv = require('dotenv');
 const express = require('express');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const Anthropic = require('@anthropic-ai/sdk');
 
 const ROOT = path.resolve(__dirname, '..');
 
@@ -229,14 +230,20 @@ function isQuotaOrRateLimitError(err) {
     /* ignore */
   }
   const s = parts.join(' ').toLowerCase();
+  const st = Number((err && err.status) || 0);
   return (
+    st === 429 ||
+    st === 529 ||
     s.includes('429') ||
+    s.includes('529') ||
     s.includes('resource_exhausted') ||
     s.includes('resource exhausted') ||
     s.includes('quota') ||
     s.includes('rate limit') ||
+    s.includes('rate_limit') ||
     s.includes('too many requests') ||
-    s.includes('exhausted')
+    s.includes('exhausted') ||
+    s.includes('overloaded')
   );
 }
 
@@ -320,10 +327,74 @@ async function analyzeWithGroq(apiKey, base64Data, mimeType) {
   return normalizeAnalysis(parsed);
 }
 
+/** Claude: JPEG, PNG, GIF, WebP (não HEIC). */
+function claudeImageMediaType(mimeType) {
+  const m = String(mimeType || '')
+    .toLowerCase()
+    .split(';')[0]
+    .trim();
+  if (m === 'image/jpg') return 'image/jpeg';
+  if (m === 'image/heic' || m === 'image/heif') {
+    throw new Error(
+      'Claude não suporta HEIC/HEIF. Exporte a foto como JPEG ou WebP, ou use outro formato.',
+    );
+  }
+  if (/^image\/(jpeg|png|gif|webp)$/.test(m)) return m;
+  throw new Error('Para Claude use imagem JPEG, PNG, GIF ou WebP.');
+}
+
+async function analyzeWithClaude(apiKey, base64Data, mimeType) {
+  const mediaType = claudeImageMediaType(mimeType);
+  const model =
+    String(process.env.CLAUDE_MODEL || '').trim() || 'claude-sonnet-4-6';
+
+  const client = new Anthropic({ apiKey: apiKey });
+  const message = await client.messages.create({
+    model: model,
+    max_tokens: 2048,
+    temperature: 0.35,
+    messages: [
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'image',
+            source: {
+              type: 'base64',
+              media_type: mediaType,
+              data: base64Data,
+            },
+          },
+          {
+            type: 'text',
+            text:
+              ANALYSIS_PROMPT +
+              '\n\nResponda apenas com JSON válido (um objeto), sem markdown e sem texto fora do JSON.',
+          },
+        ],
+      },
+    ],
+  });
+
+  const blocks = message.content || [];
+  let text = '';
+  for (let i = 0; i < blocks.length; i++) {
+    if (blocks[i].type === 'text') {
+      text += blocks[i].text || '';
+    }
+  }
+  if (!String(text).trim()) {
+    throw new Error('Claude não devolveu texto. Tente outra imagem.');
+  }
+  const parsed = parseAnalysisJson(text);
+  return normalizeAnalysis(parsed);
+}
+
 app.post('/api/analyze-meal', async function (req, res) {
   try {
     const geminiKey = String(process.env.GEMINI_API_KEY || '').trim();
     const groqKey = String(process.env.GROQ_API_KEY || '').trim();
+    const anthropicKey = String(process.env.ANTHROPIC_API_KEY || '').trim();
     const provider = String(process.env.MEAL_ANALYSIS_PROVIDER || 'auto').toLowerCase();
 
     const imageBase64 = req.body && req.body.imageBase64;
@@ -377,17 +448,26 @@ app.post('/api/analyze-meal', async function (req, res) {
         if (!geminiKey) {
           return res.status(503).json({
             error:
-              'MEAL_ANALYSIS_PROVIDER=gemini exige GEMINI_API_KEY no .env, ou use MEAL_ANALYSIS_PROVIDER=auto ou groq.',
+              'MEAL_ANALYSIS_PROVIDER=gemini exige GEMINI_API_KEY no .env, ou use auto, groq ou claude.',
           });
         }
         const genAI = new GoogleGenerativeAI(geminiKey);
         analysis = await analyzeWithGemini(genAI, parts);
         usedProvider = 'gemini';
-      } else {
-        if (!geminiKey && !groqKey) {
+      } else if (provider === 'claude') {
+        if (!anthropicKey) {
           return res.status(503).json({
             error:
-              'Defina pelo menos uma chave no .env: GEMINI_API_KEY (Google AI Studio) ou GROQ_API_KEY (console.groq.com, gratuito com visão). Opcional: MEAL_ANALYSIS_PROVIDER=auto|gemini|groq',
+              'MEAL_ANALYSIS_PROVIDER=claude exige ANTHROPIC_API_KEY no .env (https://console.anthropic.com/).',
+          });
+        }
+        analysis = await analyzeWithClaude(anthropicKey, base64Data, mimeType);
+        usedProvider = 'claude';
+      } else {
+        if (!geminiKey && !groqKey && !anthropicKey) {
+          return res.status(503).json({
+            error:
+              'Defina pelo menos uma chave no .env: GEMINI_API_KEY, GROQ_API_KEY ou ANTHROPIC_API_KEY. MEAL_ANALYSIS_PROVIDER=auto|gemini|groq|claude',
           });
         }
         if (geminiKey) {
@@ -396,17 +476,28 @@ app.post('/api/analyze-meal', async function (req, res) {
             analysis = await analyzeWithGemini(genAI, parts);
             usedProvider = 'gemini';
           } catch (gemErr) {
-            if (isQuotaOrRateLimitError(gemErr) && groqKey) {
-              console.warn('[analyze-meal] Cota ou limite Gemini; a usar Groq.');
-              analysis = await analyzeWithGroq(groqKey, base64Data, mimeType);
-              usedProvider = 'groq';
+            if (isQuotaOrRateLimitError(gemErr)) {
+              if (groqKey) {
+                console.warn('[analyze-meal] Cota ou limite Gemini; a usar Groq.');
+                analysis = await analyzeWithGroq(groqKey, base64Data, mimeType);
+                usedProvider = 'groq';
+              } else if (anthropicKey) {
+                console.warn('[analyze-meal] Cota ou limite Gemini; a usar Claude.');
+                analysis = await analyzeWithClaude(anthropicKey, base64Data, mimeType);
+                usedProvider = 'claude';
+              } else {
+                throw gemErr;
+              }
             } else {
               throw gemErr;
             }
           }
-        } else {
+        } else if (groqKey) {
           analysis = await analyzeWithGroq(groqKey, base64Data, mimeType);
           usedProvider = 'groq';
+        } else {
+          analysis = await analyzeWithClaude(anthropicKey, base64Data, mimeType);
+          usedProvider = 'claude';
         }
       }
     } catch (err) {
@@ -414,19 +505,19 @@ app.post('/api/analyze-meal', async function (req, res) {
       const low = msg.toLowerCase();
       if (low.includes('api key') || low.includes('api_key') || low.includes('permission')) {
         msg =
-          'Chave de API inválida ou sem permissão. Verifique GEMINI_API_KEY ou GROQ_API_KEY no .env.';
+          'Chave de API inválida ou sem permissão. Verifique GEMINI_API_KEY, GROQ_API_KEY ou ANTHROPIC_API_KEY no .env.';
       } else if (
         low.includes('quota') ||
         low.includes('resource_exhausted') ||
         low.includes('429')
       ) {
         msg =
-          'Cota ou limite de pedidos (Gemini). Adicione GROQ_API_KEY ao .env para usar o Groq gratuitamente em fallback automático, ou defina MEAL_ANALYSIS_PROVIDER=groq.';
-        if (groqKey && usedProvider !== 'groq') {
-          msg += ' (Groq já está no .env — reinicie o servidor e tente de novo.)';
+          'Cota ou limite de pedidos. Em modo auto: adicione GROQ_API_KEY (fallback gratuito) ou ANTHROPIC_API_KEY (Claude), ou defina MEAL_ANALYSIS_PROVIDER=groq ou claude.';
+        if ((groqKey || anthropicKey) && usedProvider === 'gemini') {
+          msg += ' Reinicie o servidor após alterar o .env.';
         }
       } else if (low.includes('billing')) {
-        msg = 'A API pediu faturação ativa. No Google AI Studio verifique o projeto e limites.';
+        msg = 'A API pediu faturação ativa. Verifique o projeto no Google AI Studio ou na Anthropic.';
       }
       return res.status(500).json({ error: msg });
     }
@@ -470,15 +561,24 @@ app.listen(PORT, function () {
   const envPath = path.join(ROOT, '.env');
   const g = String(process.env.GEMINI_API_KEY || '').trim();
   const q = String(process.env.GROQ_API_KEY || '').trim();
-  if (!g && !q) {
-    console.warn('[daia] Nenhuma chave: GEMINI_API_KEY ou GROQ_API_KEY.');
+  const a = String(process.env.ANTHROPIC_API_KEY || '').trim();
+  const prov = String(process.env.MEAL_ANALYSIS_PROVIDER || 'auto').toLowerCase();
+  if (!g && !q && !a) {
+    console.warn('[daia] Nenhuma chave: GEMINI_API_KEY, GROQ_API_KEY ou ANTHROPIC_API_KEY.');
     console.warn('[daia] Raiz do projeto:', ROOT);
     console.warn('[daia] .env esperado em:', envPath, 'existe:', fs.existsSync(envPath));
   } else {
-    if (g && q) {
+    if (prov === 'claude') {
+      console.log('[daia] Provedor: Claude (ANTHROPIC_API_KEY).');
+    } else if (g && q) {
       console.log('[daia] Gemini + Groq: modo auto usa Groq se a cota do Gemini esgotar.');
+      if (a) console.log('[daia] Com ANTHROPIC_API_KEY: sem Groq no fallback, usa Claude.');
     } else if (q) {
       console.log('[daia] Apenas Groq (MEAL_ANALYSIS_PROVIDER pode ser groq ou auto).');
+    } else if (a && !g) {
+      console.log('[daia] Apenas Claude no modo auto (sem Gemini).');
+    } else if (g && a) {
+      console.log('[daia] Gemini + Claude: modo auto usa Claude se a cota do Gemini esgotar (sem Groq).');
     }
   }
 });

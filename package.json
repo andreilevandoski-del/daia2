@@ -16,6 +16,7 @@
     "serve": "^14.2.4"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.82.0",
     "@google/generative-ai": "^0.21.0",
     "@tabler/icons-webfont": "^3.41.1",
     "dotenv": "^16.4.5",
