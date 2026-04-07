@@ -6,8 +6,8 @@ const path = require('path');
 const fs = require('fs');
 const { app, PORT } = require('./app');
 
-app.listen(PORT, function () {
-  console.log('Daia — http://localhost:' + PORT);
+const server = app.listen(PORT, '0.0.0.0', function () {
+  console.log('Daia — http://0.0.0.0:' + PORT + ' (Render usa PORT do ambiente)');
   console.log('API: POST /api/analyze-meal | POST /api/analyze-meal-audio');
   const ROOT = path.resolve(__dirname, '..');
   const envPath = path.join(ROOT, '.env');
@@ -35,4 +35,9 @@ app.listen(PORT, function () {
       console.log('[daia] Gemini (Google AI Studio). Cotas maiores: ative faturação no projeto Cloud associado à chave.');
     }
   }
+});
+
+server.on('error', function (err) {
+  console.error('[daia] Falha ao abrir porta', PORT, err && err.message ? err.message : err);
+  process.exit(1);
 });

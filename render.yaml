@@ -1,6 +1,6 @@
-# Render.com — Web Service (Node): estáticos + POST /api/analyze-meal
-# Dashboard: New + → Web Service → liga o repositório GitHub; Render deteta render.yaml
-# Em Environment, adiciona: GEMINI_API_KEY, MEAL_ANALYSIS_PROVIDER, etc. (como no .env.example)
+# Render.com — Web Service (Node)
+# Raiz do serviço = pasta onde está este ficheiro e o package.json (Root Directory no painel).
+# Start Command no painel deve ser: node server/index.js (ou deixa o Blueprint aplicar este YAML).
 
 services:
   - type: web
@@ -9,6 +9,8 @@ services:
     plan: free
     region: frankfurt
     buildCommand: npm install
-    # Explícito: evita o Render assumir `node src/index.js`
     startCommand: node server/index.js
     healthCheckPath: /index.html
+    envVars:
+      - key: NODE_VERSION
+        value: "20.18.0"
